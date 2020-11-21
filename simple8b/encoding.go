@@ -238,14 +238,16 @@ func Count(v uint64) (int, error) {
 	return selector[sel].n, nil
 }
 
-func ForEach(b []byte, fn func(v uint64) bool) error {
+func ForEach(b []byte, fn func(v uint64) bool) int, error {
+	count := 0
 	for len(b) >= 8 {
 		v := binary.BigEndian.Uint64(b[:8])
 		b = b[8:]
+		count++
 
 		sel := v >> 60
 		if sel >= 16 {
-			return fmt.Errorf("invalid selector value: %v", sel)
+			return count, fmt.Errorf("invalid selector value: %v", sel)
 		}
 
 		n := selector[sel].n
@@ -255,12 +257,12 @@ func ForEach(b []byte, fn func(v uint64) bool) error {
 		for i := 0; i < n; i++ {
 			val := v & mask
 			if !fn(val) {
-				return nil
+				return count, nil
 			}
 			v = v >> bits
 		}
 	}
-	return nil
+	return count, nil
 }
 
 func CountBytesBetween(b []byte, min, max uint64) (int, error) {
