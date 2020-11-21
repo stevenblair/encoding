@@ -238,7 +238,7 @@ func Count(v uint64) (int, error) {
 	return selector[sel].n, nil
 }
 
-func ForEach(b []byte, fn func(v uint64) bool) int, error {
+func ForEach(b []byte, fn func(v uint64) bool) (int, error) {
 	count := 0
 	for len(b) >= 8 {
 		v := binary.BigEndian.Uint64(b[:8])
