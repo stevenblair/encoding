@@ -418,6 +418,74 @@ func EncodeAll(src []uint64) ([]uint64, error) {
 	return dst[:j], nil
 }
 
+// EncodeAllRef returns a packed slice of the values from src.  If a value is over
+// 1 << 60, an error is returned.
+func EncodeAllRef(dst *[]uint64, src []uint64) (int, error) {
+	i := 0
+	j := 0
+
+	for {
+		if i >= len(src) {
+			break
+		}
+		remaining := src[i:]
+
+		if canPack(remaining, 240, 0) {
+			(*dst)[j] = 0
+			i += 240
+		} else if canPack(remaining, 120, 0) {
+			(*dst)[j] = 1 << 60
+			i += 120
+		} else if canPack(remaining, 60, 1) {
+			(*dst)[j] = pack60(src[i : i+60])
+			i += 60
+		} else if canPack(remaining, 30, 2) {
+			(*dst)[j] = pack30(src[i : i+30])
+			i += 30
+		} else if canPack(remaining, 20, 3) {
+			(*dst)[j] = pack20(src[i : i+20])
+			i += 20
+		} else if canPack(remaining, 15, 4) {
+			(*dst)[j] = pack15(src[i : i+15])
+			i += 15
+		} else if canPack(remaining, 12, 5) {
+			(*dst)[j] = pack12(src[i : i+12])
+			i += 12
+		} else if canPack(remaining, 10, 6) {
+			(*dst)[j] = pack10(src[i : i+10])
+			i += 10
+		} else if canPack(remaining, 8, 7) {
+			(*dst)[j] = pack8(src[i : i+8])
+			i += 8
+		} else if canPack(remaining, 7, 8) {
+			(*dst)[j] = pack7(src[i : i+7])
+			i += 7
+		} else if canPack(remaining, 6, 10) {
+			(*dst)[j] = pack6(src[i : i+6])
+			i += 6
+		} else if canPack(remaining, 5, 12) {
+			(*dst)[j] = pack5(src[i : i+5])
+			i += 5
+		} else if canPack(remaining, 4, 15) {
+			(*dst)[j] = pack4(src[i : i+4])
+			i += 4
+		} else if canPack(remaining, 3, 20) {
+			(*dst)[j] = pack3(src[i : i+3])
+			i += 3
+		} else if canPack(remaining, 2, 30) {
+			(*dst)[j] = pack2(src[i : i+2])
+			i += 2
+		} else if canPack(remaining, 1, 60) {
+			(*dst)[j] = pack1(src[i : i+1])
+			i++
+		} else {
+			return j, fmt.Errorf("value out of bounds")
+		}
+		j++
+	}
+	return j, nil
+}
+
 func Decode(dst *[240]uint64, v uint64) (n int, err error) {
 	sel := v >> 60
 	if sel >= 16 {
